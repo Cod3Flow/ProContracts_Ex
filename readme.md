@@ -17,7 +17,7 @@ python ./src/main.py
 
 ## Tests
 ```sh
-    pytest -v -s
+pytest -v -s
 ```
 
 
