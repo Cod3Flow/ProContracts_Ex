@@ -98,6 +98,7 @@ class Model:
                 .values(**values)
                 )
         self.dbc.session.execute(stmt)
+        self.commit()
         # TODO: add return
 
     # DELETE
