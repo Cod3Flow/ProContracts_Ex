@@ -143,7 +143,7 @@ class View:
 
     def select_contract(self) -> Optional[int]:
         try:
-            id = int(input('Введите номер контракта: '))
+            id = int(input('Введите номер договора: '))
             return id
         except ValueError:
             self.show_message('Введен неверный номер')

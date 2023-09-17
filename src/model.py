@@ -1,5 +1,7 @@
 from enum import IntEnum
 from datetime import date
+from operator import and_
+from typing import List, Tuple
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, select, update, delete, insert
 from sqlalchemy.orm import DeclarativeBase
@@ -66,53 +68,69 @@ class Model:
         self.dbc.connect()
         Base.metadata.create_all(bind=self.dbc.engine)
 
-    # CREATE
-    def create_item(self, item):
-        self.dbc.session.add(item)
-        self.commit()
-        # TODO: add return
+    # contract operations
+    def create_contract(self, contract: Contract):
+        return self.dbc.create_item(contract)
 
-    # READ
-    def read_item(self, entity, **ident):
-        result = self.dbc.session.get(entity, ident)
-        return result
+    def read_contract(self, contract: Contract) -> Contract:
+        return self.read_contract_by_id(contract.id)
 
-    def read_items(self, entity, filter=None):
+    def read_contract_by_id(self, id: int) -> Contract:
+        return self.dbc.read_item(Contract, id=id)
 
-        if filter is None:
-            stmt = (select(entity)
-                    .order_by(entity.id)
-                    )
-        else:
-            stmt = (select(entity)
-                    .where(filter)
-                    .order_by(entity.id)
-                    )
+    def read_contracts(self, filter=None):
+        return self.dbc.read_items(Contract, filter)
 
-        return self.dbc.session.scalars(stmt).all()
+    def update_contract(self, id: int, **kwargs):
+        self.dbc.update_item(Contract, id, **kwargs)
 
-    # UPDATE
-    def update_item(self, entity, id: int, **values):
-        stmt = (update(entity)
-                .where(entity.id == id)
-                .values(**values)
-                )
-        self.dbc.session.execute(stmt)
-        self.commit()
-        # TODO: add return
+    def delete_contract(self, contract: Contract):
+        self.dbc.delete_item(contract)
 
-    # DELETE
-    def delete_item(self, entity, id: int):
-        stmt = delete(entity).where(entity.id == id)
-        self.dbc.session.execute(stmt)
-        self.commit()
+    def get_active_contracts(self, project_id=None):
+        return self.read_contracts(filter=and_(Contract.project_id == project_id,
+                                               Contract.status == ContractStatus.ACTIVE
+                                               )
+                                   )
 
-    def delete_all(self, entity):
-        self.dbc.session.query(entity).delete()
-        self.commit()
+    # project operations
+    def create_project(self, project: Project):
+        new_project = self.dbc.create_item(project)
+        return new_project
 
-    def commit(self):
-        self.dbc.session.commit()
+    def read_project(self, project: Project) -> Project:
+        return self.read_project_by_id(project.id)
 
+    def read_project_by_id(self, id: int) -> Project:
+        return self.dbc.read_item(Project, id=id)
 
+    def read_projects(self, filter=None):
+        return self.dbc.read_items(Project, filter)
+
+    def create_new_project_check(self, **kwargs) -> Tuple[bool, str]:
+        # only free active contracts allowed
+        active_contracts = self.get_active_contracts()
+
+        if not active_contracts:
+            return False, 'Нет свободных активных договоров! Создание проекта отменено.'
+
+        return True, ''
+
+    def add_contract_to_project(self, project_id: int, contract_id: int) -> Tuple[bool, str]:
+        project = self.read_project_by_id(project_id)
+        contract = self.read_contract_by_id(contract_id)
+
+        if contract in project.contracts:
+            err_message = 'Договор уже содержится в проекте. Добавление отменено.'
+            return False, err_message
+
+        active_contracts_in_project = [c for c in project.contracts if c.status == ContractStatus.ACTIVE]
+        if active_contracts_in_project:
+            active_contract = active_contracts_in_project[0]
+            err_message = f'В проекте уже есть активный договор №{active_contract.id}. Добавление отменено.'
+            return False, err_message
+
+        project.contracts.extend([contract])
+
+        return True, f'Договор №{contract_id} добавлен в проект №{project_id}'
 
