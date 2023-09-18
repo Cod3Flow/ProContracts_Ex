@@ -76,6 +76,10 @@ class DBConnection:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
+    def __del__(self):
+        if self.session:
+            self.disconnect()
+
     def connect(self):
         session = sessionmaker(bind=self.engine)
         self.session = session()
