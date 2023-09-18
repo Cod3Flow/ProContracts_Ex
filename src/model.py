@@ -9,6 +9,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import now
 
 from dbconnection import DBConnection
+from exceptions import ActiveContractsNotPresent, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject, \
+    ContractIsNotActive
 
 
 class Base(DeclarativeBase):
@@ -107,30 +109,30 @@ class Model:
     def read_projects(self, filter=None):
         return self.dbc.read_items(Project, filter)
 
-    def create_new_project_check(self, **kwargs) -> Tuple[bool, str]:
+    def create_new_project(self, project: Project, **kwargs):
+
         # only free active contracts allowed
         active_contracts = self.get_active_contracts()
-
         if not active_contracts:
-            return False, 'Нет свободных активных договоров! Создание проекта отменено.'
+            raise ActiveContractsNotPresent('Нет свободных подтвержденных договоров! Создание проекта отменено.')
 
-        return True, ''
+        self.create_project(project)
 
-    def add_contract_to_project(self, project_id: int, contract_id: int) -> Tuple[bool, str]:
+    def add_contract_to_project(self, project_id: int, contract_id: int):
         project = self.read_project_by_id(project_id)
         contract = self.read_contract_by_id(contract_id)
 
+        if contract.status != ContractStatus.ACTIVE:
+            raise ContractIsNotActive('Договор должен быть в статусе Подтвержден. Добавление отменено.')
+
         if contract in project.contracts:
-            err_message = 'Договор уже содержится в проекте. Добавление отменено.'
-            return False, err_message
+            raise ContractDuplicationInProject('Договор уже содержится в проекте. Добавление отменено.')
 
         active_contracts_in_project = [c for c in project.contracts if c.status == ContractStatus.ACTIVE]
         if active_contracts_in_project:
             active_contract = active_contracts_in_project[0]
-            err_message = f'В проекте уже есть активный договор №{active_contract.id}. Добавление отменено.'
-            return False, err_message
+            raise ActiveContractAlreadyExistsInProject(f'В проекте уже есть активный договор №{active_contract.id}. Добавление отменено.')
 
         project.contracts.extend([contract])
 
-        return True, f'Договор №{contract_id} добавлен в проект №{project_id}'
 

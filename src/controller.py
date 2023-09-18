@@ -4,6 +4,8 @@ from datetime import date
 from typing import Optional, Dict
 
 import randomdata
+from exceptions import ActiveContractsNotPresent, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject, \
+    ContractIsNotActive
 from model import Model, ContractStatus
 from view import View
 
@@ -80,18 +82,23 @@ class Controller:
 
     # projects
     def create_new_project(self, **kwargs):
-        status, message = self.model.create_new_project_check()
-        if not status:
-            self.view.show_message(message)
-            return
-
         project = random.choice(randomdata.projects)
-        self.model.create_project(project)
-        self.view.show_message(f'Создан новый случайный проект: {project}')
+
+        try:
+            self.model.create_project(project)
+            self.view.show_message(f'Создан новый случайный проект: {project}')
+
+        except ActiveContractsNotPresent as e:
+            self.view.show_message(e)
 
     def add_contract_to_project(self, project_id: int, contract_id: int):
-        status, message = self.model.add_contract_to_project(project_id, contract_id)
-        self.view.show_message(message)
+
+        try:
+            self.model.add_contract_to_project(project_id, contract_id)
+            self.view.show_message(f'Договор №{contract_id} добавлен в проект №{project_id}')
+
+        except (ContractIsNotActive, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject) as e:
+            self.view.show_message(e)
 
     def show_projects(self):
         projects = self.model.read_projects()
