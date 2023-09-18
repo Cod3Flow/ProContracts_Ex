@@ -8,9 +8,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import now
 
+import exceptions as exc
 from dbconnection import DBConnection
-from exceptions import ActiveContractsNotPresent, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject, \
-    ContractIsNotActive
 
 
 class Base(DeclarativeBase):
@@ -114,7 +113,7 @@ class Model:
         # only free active contracts allowed
         active_contracts = self.get_active_contracts()
         if not active_contracts:
-            raise ActiveContractsNotPresent('Нет свободных подтвержденных договоров! Создание проекта отменено.')
+            raise exc.ActiveContractsNotPresent('Нет свободных подтвержденных договоров! Создание проекта отменено.')
 
         self.create_project(project)
 
@@ -123,15 +122,15 @@ class Model:
         contract = self.read_contract_by_id(contract_id)
 
         if contract.status != ContractStatus.ACTIVE:
-            raise ContractIsNotActive('Договор должен быть в статусе Подтвержден. Добавление отменено.')
+            raise exc.ContractIsNotActive('Договор должен быть в статусе Подтвержден. Добавление отменено.')
 
         if contract in project.contracts:
-            raise ContractDuplicationInProject('Договор уже содержится в проекте. Добавление отменено.')
+            raise exc.ContractDuplicationInProject('Договор уже содержится в проекте. Добавление отменено.')
 
         active_contracts_in_project = [c for c in project.contracts if c.status == ContractStatus.ACTIVE]
         if active_contracts_in_project:
             active_contract = active_contracts_in_project[0]
-            raise ActiveContractAlreadyExistsInProject(f'В проекте уже есть активный договор №{active_contract.id}. Добавление отменено.')
+            raise exc.ActiveContractAlreadyExistsInProject(f'В проекте уже есть активный договор №{active_contract.id}. Добавление отменено.')
 
         project.contracts.extend([contract])
 
