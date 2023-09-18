@@ -4,8 +4,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from constants import DEFAULT_DB
 
 
-class DBSession:
+class DBQuery:
     session: Session
+
+    def __init__(self, session: Session):
+        self.session = session
 
     # CREATE
     def create_item(self, item):
@@ -59,7 +62,7 @@ class DBSession:
         self.delete_all(entity)
 
 
-class DBConnection(DBSession):
+class DBConnection:
     engine: Engine
     session: Session
 

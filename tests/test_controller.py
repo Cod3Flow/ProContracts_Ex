@@ -4,6 +4,7 @@ from sqlalchemy import and_
 
 import randomdata
 from controller import Controller
+from dbconnection import DBQuery
 from model import Model, ContractStatus, Contract, Project
 from view import View
 
@@ -101,9 +102,10 @@ def projects_check(controller):
 def test_controller():
     controller = Controller(Model(), View())
 
-    controller.model.dbc.truncate_table(Contract)
-    controller.model.dbc.truncate_table(Project)
-    controller.model.dbc.commit()
+    session = controller.model.dbc.session
+    DBQuery(session).truncate_table(Contract)
+    DBQuery(session).truncate_table(Project)
+    DBQuery(session).commit()
 
     contracts_check(controller)
     projects_check(controller)

@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import now
 
 import exceptions as exc
-from dbconnection import DBConnection
+from dbconnection import DBConnection, DBQuery
 
 
 class Base(DeclarativeBase):
@@ -71,22 +71,22 @@ class Model:
 
     # contract operations
     def create_contract(self, contract: Contract):
-        return self.dbc.create_item(contract)
+        return DBQuery(self.dbc.session).create_item(contract)
 
     def read_contract(self, contract: Contract) -> Contract:
         return self.read_contract_by_id(contract.id)
 
     def read_contract_by_id(self, id: int) -> Contract:
-        return self.dbc.read_item(Contract, id=id)
+        return DBQuery(self.dbc.session).read_item(Contract, id=id)
 
     def read_contracts(self, filter=None):
-        return self.dbc.read_items(Contract, filter)
+        return DBQuery(self.dbc.session).read_items(Contract, filter)
 
     def update_contract(self, id: int, **kwargs):
-        self.dbc.update_item(Contract, id, **kwargs)
+        DBQuery(self.dbc.session).update_item(Contract, id, **kwargs)
 
     def delete_contract(self, contract: Contract):
-        self.dbc.delete_item(contract)
+        DBQuery(self.dbc.session).delete_item(contract)
 
     def get_active_contracts(self, project_id=None):
         return self.read_contracts(filter=and_(Contract.project_id == project_id,
@@ -102,17 +102,17 @@ class Model:
 
     # project operations
     def create_project(self, project: Project):
-        new_project = self.dbc.create_item(project)
+        new_project = DBQuery(self.dbc.session).create_item(project)
         return new_project
 
     def read_project(self, project: Project) -> Project:
         return self.read_project_by_id(project.id)
 
     def read_project_by_id(self, id: int) -> Project:
-        return self.dbc.read_item(Project, id=id)
+        return DBQuery(self.dbc.session).read_item(Project, id=id)
 
     def read_projects(self, filter=None):
-        return self.dbc.read_items(Project, filter)
+        return DBQuery(self.dbc.session).read_items(Project, filter)
 
     def create_new_project(self, project: Project, **kwargs):
 
