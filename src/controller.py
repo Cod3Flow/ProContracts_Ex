@@ -4,8 +4,7 @@ from datetime import date
 from typing import Optional, Dict
 
 import randomdata
-from exceptions import ActiveContractsNotPresent, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject, \
-    ContractIsNotActive
+import exceptions as exc
 from model import Model, ContractStatus
 from view import View
 
@@ -88,7 +87,7 @@ class Controller:
             self.model.create_project(project)
             self.view.show_message(f'Создан новый случайный проект: {project}')
 
-        except ActiveContractsNotPresent as e:
+        except exc.ActiveContractsNotPresent as e:
             self.view.show_message(e)
 
     def add_contract_to_project(self, project_id: int, contract_id: int):
@@ -97,7 +96,7 @@ class Controller:
             self.model.add_contract_to_project(project_id, contract_id)
             self.view.show_message(f'Договор №{contract_id} добавлен в проект №{project_id}')
 
-        except (ContractIsNotActive, ContractDuplicationInProject, ActiveContractAlreadyExistsInProject) as e:
+        except (exc.ContractIsNotActive, exc.ContractDuplicationInProject, exc.ActiveContractAlreadyExistsInProject) as e:
             self.view.show_message(e)
 
     def show_projects(self):
