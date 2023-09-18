@@ -94,6 +94,12 @@ class Model:
                                                )
                                    )
 
+    def confirm_contract(self, id: int, date_signed):
+        self.update_contract(id, status=ContractStatus.ACTIVE, date_signed=date_signed)
+
+    def close_contract(self, id: int):
+        self.update_contract(id, status=ContractStatus.CLOSED)
+
     # project operations
     def create_project(self, project: Project):
         new_project = self.dbc.create_item(project)

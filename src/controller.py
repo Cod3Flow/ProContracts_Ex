@@ -5,7 +5,7 @@ from typing import Optional, Dict
 
 import randomdata
 import exceptions as exc
-from model import Model, ContractStatus
+from model import Model
 from view import View
 
 
@@ -57,22 +57,16 @@ class Controller:
         self.view.show_message(f'Создан новый случайный договор: {contract}')
 
     def confirm_contract(self, id: int):
-        """
-        Changes contract status to ACTIVE
-        """
-
-        self.model.update_contract(id, status=ContractStatus.ACTIVE, date_signed=date.today())
-
+        # TODO: allow user to select date
+        date_signed = date.today()
+        self.model.confirm_contract(id, date_signed=date_signed)
         # TODO: check update status
+
         self.view.show_message(f'Договор №{id} подтвержден')
 
     def close_contract(self, id: int):
-        """
-        Changes contract status to CLOSED
-        """
-
+        self.model.close_contract(id)
         # TODO: check update status
-        self.model.update_contract(id, status=ContractStatus.CLOSED)
         self.view.show_message(f'Договор №{id} завершен')
 
     def show_contracts(self):
